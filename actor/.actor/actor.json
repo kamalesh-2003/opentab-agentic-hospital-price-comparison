@@ -1,0 +1,9 @@
+{
+  "actorSpecification": 1,
+  "name": "hospital-price-transparency-parser",
+  "title": "Hospital Price Transparency Parser",
+  "description": "Discovers a hospital's CMS price file via cms-hpt.txt, stream-parses it, and outputs normalized prices for target procedure codes.",
+  "version": "0.1",
+  "input": "./input_schema.json",
+  "dockerfile": "../Dockerfile"
+}

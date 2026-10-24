@@ -1,0 +1,10 @@
+{
+  "name": "OpenTab",
+  "short_name": "OpenTab",
+  "description": "Know the bill before you get the bill.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
+  "icons": [{ "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }]
+}
