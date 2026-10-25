@@ -5,12 +5,12 @@ const INSURERS: [RegExp, string][] = [
   [/kaiser/i, "Kaiser Permanente"],
   [/aetna/i, "Aetna"],
   [/cigna/i, "Cigna"],
-  [/united\s*health|\buhc\b|optum|united\s*healthcare/i, "UnitedHealthcare"],
+  [/united\s*health|\buhc\b|optum|united\s*healthcare|^united$/i, "UnitedHealthcare"],
   [/health\s*net/i, "Health Net"],
   [/humana/i, "Humana"],
   [/sutter\s*health\s*plus/i, "Sutter Health Plus"],
   [/western\s*health\s*advantage/i, "Western Health Advantage"],
-  [/brown\s*(&|and)\s*toland/i, "Brown & Toland"],
+  [/brown\s*(&|and)\s*toland?/i, "Brown & Toland"],
   [/hill\s*physicians/i, "Hill Physicians"],
   [/chinese\s*community/i, "Chinese Community Health Plan"],
   [/alameda\s*alliance/i, "Alameda Alliance for Health"],
@@ -29,6 +29,9 @@ const INSURERS: [RegExp, string][] = [
 ];
 
 export function normalizePayer(payer: string | null): string | null {
+  if (!payer) return null;
+  // Strip plan/contract codes some files append, e.g. "CIGNA HMO [1010103]".
+  payer = payer.replace(/\s*\[[^\]]*\]/g, "").replace(/\s*\(\d+\)/g, "").trim();
   if (!payer) return null;
   for (const [re, name] of INSURERS) if (re.test(payer)) return name;
   return payer

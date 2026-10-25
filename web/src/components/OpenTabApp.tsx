@@ -106,6 +106,7 @@ export default function OpenTabApp() {
   const onMic = useCallback(async () => {
     if (voice.state === "listening" || voice.state === "finishing") return voice.stopListening();
     if (voice.state === "speaking") voice.stopSpeaking();
+    voice.unlockAudio(); // must run inside the tap, before any await, or phones block the spoken answer
     const heard = await voice.listen();
     if (!heard) return;
     setQuestion(heard);
@@ -247,7 +248,11 @@ export default function OpenTabApp() {
               setQuestion(q);
               ask(q);
             }}
-            onSpeak={(t) => (voice.state === "speaking" ? voice.stopSpeaking() : voice.speak(t))}
+            onSpeak={(t) => {
+              if (voice.state === "speaking") return voice.stopSpeaking();
+              voice.unlockAudio();
+              voice.speak(t);
+            }}
             speaking={voice.state === "speaking"}
           />
         </div>
@@ -337,6 +342,7 @@ function Results({
   speaking: boolean;
 }) {
   const recent = useQuery(api.searches.recent);
+  const [myInsurerOnly, setMyInsurerOnly] = useState(false);
   if (!asked && !result) {
     return (
       <div className="space-y-4">
@@ -395,8 +401,14 @@ function Results({
             </button>
           </div>
           <PriceChart result={result} onSelect={onSelect} />
+          {result.payer && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={myInsurerOnly} onChange={(e) => setMyInsurerOnly(e.target.checked)} className="h-4 w-4 accent-[var(--brand)]" />
+              Only hospitals with published {result.payer} rates ({result.hospitals.filter((h) => h.hasYourInsurer).length})
+            </label>
+          )}
           <ol className="space-y-3">
-            {result.hospitals.map((h, i) => (
+            {result.hospitals.filter((h) => !myInsurerOnly || h.hasYourInsurer).map((h, i) => (
               <HospitalCard key={h.hospitalId} h={h} rank={h.price != null ? i + 1 : null} result={result} selected={selected === h.hospitalId} onSelect={onSelect} />
             ))}
           </ol>
@@ -471,6 +483,7 @@ function HospitalCard({ h, rank, result, selected, onSelect }: { h: HospitalResu
         )}
         {h.cashBeatsPlan && result.payer && <p className="mt-2 text-xs font-semibold text-[var(--good)]">Cash price is lower than the {result.payer} rate here. Ask the billing office.</p>}
         {h.savingsVsMax != null && h.savingsVsMax > 0 && <p className="mt-2 text-sm font-semibold text-[var(--good)]">Save {money(h.savingsVsMax)} vs. the most expensive</p>}
+        <Insurers h={h} payer={result.payer} />
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--muted)]">
           {h.fileLastUpdated && <span>File updated {h.fileLastUpdated}</span>}
           {h.partial && <span className="rounded bg-[var(--warn-soft)] px-1.5 py-0.5 text-[var(--warn)]">partial file</span>}
@@ -482,6 +495,43 @@ function HospitalCard({ h, rank, result, selected, onSelect }: { h: HospitalResu
         </div>
       </div>
     </li>
+  );
+}
+
+/** Insurers with negotiated rates in this hospital's price file: evidence of a contract, not a guarantee. */
+function Insurers({ h, payer }: { h: HospitalResult; payer: string | null }) {
+  const [open, setOpen] = useState(false);
+  if (!h.insurers.length) return null;
+  const shown = open ? h.insurers : h.insurers.slice(0, 5);
+  return (
+    <div className="mt-3">
+      {payer && (
+        <p className={`mb-1.5 text-xs font-semibold ${h.hasYourInsurer ? "text-[var(--good)]" : "text-[var(--warn)]"}`}>
+          {h.hasYourInsurer
+            ? `✓ ${payer} has published rates here (likely in network)`
+            : `No ${payer} rates published here. It may be out of network, so call to confirm.`}
+        </p>
+      )}
+      <p className="text-[11px] text-[var(--muted)]">Insurers with published rates:</p>
+      <div className="mt-1 flex flex-wrap gap-1">
+        {shown.map((p) => (
+          <span key={p} className={`rounded-full px-2 py-0.5 text-[11px] ${p === payer ? "bg-[var(--good)] font-semibold text-white" : "bg-black/5"}`}>
+            {p}
+          </span>
+        ))}
+        {h.insurers.length > 5 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen((o) => !o);
+            }}
+            className="rounded-full px-2 py-0.5 text-[11px] text-[var(--brand)] underline"
+          >
+            {open ? "show less" : `+${h.insurers.length - 5} more`}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 

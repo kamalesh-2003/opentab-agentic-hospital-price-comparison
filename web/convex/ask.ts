@@ -28,6 +28,10 @@ export type HospitalResult = {
   fileLastUpdated: string | null;
   partial: boolean;
   sourceUrl: string | null;
+  /** Insurers with negotiated rates published in this hospital's price file (a sign of a contract). */
+  insurers: string[];
+  /** Whether the person's insurer is among them (null when no insurer was given). */
+  hasYourInsurer: boolean | null;
 };
 
 export type AskResult = {
@@ -86,7 +90,7 @@ export const ask = action({
         near: `POINT(${center[1]} ${center[0]})`,
         max_km: maxKm,
       });
-    const [first, allHospitals] = await Promise.all([compare(40), esql("FROM opentab-hospitals | KEEP hospital_id, hospital_name, location | LIMIT 2000")]);
+    const [first, allHospitals] = await Promise.all([compare(40), esql("FROM opentab-hospitals | KEEP hospital_id, hospital_name, location, payers | LIMIT 2000")]);
     let rows = first;
     let radiusKm = 40;
     const pricedCount = (rs: Row[]) => rs.filter((r) => (payer ? r.plan_rate_median : r.cash_price) != null).length;
@@ -97,6 +101,13 @@ export const ask = action({
     t.tools = Date.now() - t0;
 
     const loc = new Map(allHospitals.map((h) => [String(h.hospital_id), parsePoint(h.location)]));
+    const insurersOf = new Map(
+      allHospitals.map((h) => {
+        const p = h.payers as unknown;
+        const list = (Array.isArray(p) ? p : p ? [p] : []).map((x) => cleanInsurer(String(x))).filter((x) => x && !/^(medicare|medi-cal)$/i.test(x));
+        return [String(h.hospital_id), [...new Set(list)].sort()];
+      }),
+    );
     let hospitals: HospitalResult[] = rows.map((r) => {
       const planRate = num(r.plan_rate_median);
       const cash = num(r.cash_price);
@@ -120,6 +131,8 @@ export const ask = action({
         fileLastUpdated: r.file_last_updated ? String(r.file_last_updated).slice(0, 10) : null,
         partial: num(r.partial) === 1,
         sourceUrl: r.source_url ? String(r.source_url) : null,
+        insurers: insurersOf.get(String(r.hospital_id)) ?? [],
+        hasYourInsurer: payer ? (insurersOf.get(String(r.hospital_id)) ?? []).includes(payer) : null,
       };
     });
     // Rank: published price first (ascending), then distance.
@@ -191,6 +204,14 @@ export const ask = action({
     };
   },
 });
+
+/** Display cleanup for insurer names from price files: drop plan codes like "[1177113]" and fix common short forms. */
+function cleanInsurer(raw: string): string {
+  const s = raw.replace(/\s*\[[^\]]*\]/g, "").replace(/\s*\(\d+\)/g, "").replace(/\s+/g, " ").trim();
+  if (/^united$|^uhc$/i.test(s)) return "UnitedHealthcare";
+  if (/brown\s*(&|and)\s*tolan/i.test(s)) return "Brown & Toland";
+  return s;
+}
 
 /** Elastic returns geo_point in ES|QL as "POINT (lon lat)". */
 function parsePoint(v: Row[string]): [number, number] | null {

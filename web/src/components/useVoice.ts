@@ -12,6 +12,21 @@ const RATE = 16000;
 const SILENCE_MS = 1300; // stop after this much silence once speech has started
 const MAX_MS = 15000; // hard stop
 
+// A tiny silent WAV (built in code so it is always valid), used to unlock audio inside the mic tap.
+const SILENT_WAV = (() => {
+  const samples = 800; // 0.1 s at 8 kHz, 16-bit mono
+  const buf = new ArrayBuffer(44 + samples * 2);
+  const v = new DataView(buf);
+  const w = (o: number, t: string) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, "RIFF"); v.setUint32(4, 36 + samples * 2, true); w(8, "WAVE"); w(12, "fmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, "data"); v.setUint32(40, samples * 2, true);
+  let bin = "";
+  new Uint8Array(buf).forEach((b) => (bin += String.fromCharCode(b)));
+  return `data:audio/wav;base64,${typeof btoa === "function" ? btoa(bin) : ""}`;
+})();
+
 export type VoiceState = "idle" | "connecting" | "listening" | "finishing" | "speaking" | "error";
 
 // Captures mic audio as Float32 frames on the audio thread.
@@ -209,14 +224,23 @@ export function useVoice() {
         });
         if (!res.ok) throw new Error(`Voice playback failed (HTTP ${res.status})`);
         const url = URL.createObjectURL(await res.blob());
-        audioRef.current?.pause();
-        const audio = new Audio(url);
+        // Reuse the element unlocked during the tap (phones block audio started later, outside a gesture).
+        const audio = audioRef.current ?? new Audio();
         audioRef.current = audio;
+        audio.pause();
+        audio.muted = false;
+        audio.src = url;
         audio.onended = () => {
           URL.revokeObjectURL(url);
           setState("idle");
         };
-        await audio.play();
+        try {
+          await audio.play();
+        } catch {
+          // Still blocked (e.g. no tap yet this session): show the summary, ask for a tap to hear it.
+          setError("Tap “Read aloud” to hear the answer.");
+          setState("idle");
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
         setState("idle");
@@ -225,12 +249,24 @@ export function useVoice() {
     [token],
   );
 
+  /**
+   * Call synchronously inside a tap handler, before any await. iOS/Android only allow audio that a user
+   * gesture started; playing a silent clip on one element "unlocks" it for the answer that arrives later.
+   */
+  const unlockAudio = useCallback(() => {
+    const audio = audioRef.current ?? new Audio();
+    audioRef.current = audio;
+    audio.muted = true;
+    audio.src = SILENT_WAV;
+    audio.play().catch(() => {});
+  }, []);
+
   const stopSpeaking = useCallback(() => {
     audioRef.current?.pause();
     setState("idle");
   }, []);
 
-  return { state, transcript, error, listen, stopListening, speak, stopSpeaking };
+  return { state, transcript, error, listen, stopListening, speak, stopSpeaking, unlockAudio };
 }
 
 /** Average-downsample Float32 audio by a (possibly fractional) ratio. */
