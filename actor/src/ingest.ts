@@ -304,7 +304,11 @@ function cleanName(s: string | null): string | null {
   const t = s.trim();
   // Some files shout or use lower case; title-case when the whole name is one case.
   if (t === t.toUpperCase() || t === t.toLowerCase()) {
-    return t.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bUcsf\b/g, "UCSF");
+    // Capitalize after spaces/punctuation but not after apostrophes ("Children's", not "Children'S").
+    return t
+      .toLowerCase()
+      .replace(/(^|[\s\-/(&])(\w)/g, (_m, p: string, c: string) => p + c.toUpperCase())
+      .replace(/\bUcsf\b/g, "UCSF");
   }
   return t.replace(/\bUcsf\b/g, "UCSF");
 }

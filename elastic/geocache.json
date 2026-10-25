@@ -83,5 +83,13 @@
  "845 Jackson St San Francisco CA 94133|Chinese Hospital Association": {
   "lat": 37.7954771,
   "lon": -122.4090036
+ },
+ "300 Pasteur Drive, Stanford, CA 94305|Stanford Health Care": {
+  "lat": 37.4326911,
+  "lon": -122.1755409
+ },
+ "2425 SAMARITAN DRIVE, SAN JOSE, CA, 95124|Good Samaritan Hospital": {
+  "lat": 37.2522952,
+  "lon": -121.9457139
  }
 }
