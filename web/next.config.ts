@@ -1,11 +1,24 @@
 import type { NextConfig } from "next";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { loadEnvConfig } from "@next/env";
 
-// Local dev: also read the repo-root .env.local (single source of keys).
-// On Vercel, env vars come from the project settings instead.
-loadEnvConfig(path.resolve(__dirname, ".."));
+// Local dev: also read the repo-root .env.local (single source of keys). Values already set
+// (e.g. Vercel project env vars) win. @next/env caches its first load, so parse it here directly.
+const rootEnv = path.resolve(__dirname, "..", ".env.local");
+if (existsSync(rootEnv)) {
+  for (const line of readFileSync(rootEnv, "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && m[2] && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+}
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  // Only public values reach the browser bundle; all API keys stay in Convex.
+  env: {
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL ?? "",
+    // Public map key (MapTiler); restricted to our domains in the MapTiler dashboard. Optional.
+    NEXT_PUBLIC_MAPTILER_KEY: process.env.NEXT_PUBLIC_MAPTILER_KEY ?? "",
+  },
+};
 
 export default nextConfig;

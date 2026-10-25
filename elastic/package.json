@@ -1,0 +1,14 @@
+{
+  "name": "opentab-elastic",
+  "private": true,
+  "type": "module",
+  "description": "Elastic setup, ingest, Agent Builder tools and MCP client check for OpenTab",
+  "scripts": {
+    "setup": "node --env-file=../.env.local setup.mjs",
+    "agent": "node --env-file=../.env.local agent-setup.mjs",
+    "mcp-check": "node --env-file=../.env.local mcp-client.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  }
+}

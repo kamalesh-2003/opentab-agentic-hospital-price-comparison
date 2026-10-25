@@ -1,25 +1,133 @@
 @import "tailwindcss";
 
+/* Accessible palette: brand teal, green = cheaper, red = pricier. Text contrast >= 4.5:1. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bg: #f3f4f6;
+  --fg: #111827;
+  --panel: #ffffff;
+  --muted: #4b5563;
+  --brand: #0f766e;
+  --brand-strong: #115e59;
+  --brand-soft: #e6f4f2;
+  --good: #15803d;
+  --good-soft: #f0fdf4;
+  --warn: #b45309;
+  --warn-soft: #fffbeb;
+  --bar: #94a3b8;
+  --pin-low: #15803d;
+  --pin-mid: #b45309;
+  --pin-high: #b91c1c;
+  --pin-none: #6b7280;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #0b1220;
+    --fg: #e5e7eb;
+    --panel: #111827;
+    --muted: #9ca3af;
+    --brand: #2dd4bf;
+    --brand-strong: #5eead4;
+    --brand-soft: #0f2a2a;
+    --good: #4ade80;
+    --good-soft: #0f2418;
+    --warn: #fbbf24;
+    --warn-soft: #2a2110;
+    --bar: #475569;
   }
 }
 
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-sans);
+  overscroll-behavior: none;
+}
+
+/* Map price-tag pins (Leaflet divIcons) */
+.ot-icon {
+  background: none;
+  border: none;
+}
+.ot-pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #fff;
+  font: 700 13px/1.2 ui-sans-serif, system-ui, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  border: 2px solid #fff;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.ot-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #fff;
+  border-bottom: 0;
+}
+.ot-pin:hover,
+.ot-pin.ot-selected {
+  transform: translate(-50%, -100%) scale(1.15);
+  z-index: 1000;
+}
+.ot-pin.ot-selected {
+  outline: 3px solid var(--brand);
+}
+.ot-low { background: var(--pin-low); }
+.ot-mid { background: var(--pin-mid); }
+.ot-high { background: var(--pin-high); }
+.ot-none { background: var(--pin-none); font-weight: 600; opacity: 0.85; }
+.ot-idle { background: var(--brand); }
+.ot-new { background: #7c3aed; animation: ot-drop 0.6s ease-out; }
+.ot-loading { background: #7c3aed; animation: ot-pulse 1.2s ease-in-out infinite; font-weight: 600; }
+.ot-dot.ot-queued { background: #c4b5fd; width: 10px; height: 10px; border-width: 2px; }
+.ot-dot.ot-nodata { background: #d1d5db; width: 9px; height: 9px; border-width: 2px; opacity: 0.8; }
+
+@keyframes ot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(124 58 237 / 0.5); }
+  50% { box-shadow: 0 0 0 10px rgb(124 58 237 / 0); }
+}
+
+.ot-dot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  cursor: pointer;
+}
+.ot-dot.ot-new {
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes ot-drop {
+  0% { transform: translate(-50%, -300%); opacity: 0; }
+  70% { transform: translate(-50%, -40%); opacity: 1; }
+  100% { transform: translate(-50%, -50%); }
+}
+
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #e5e7eb;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }

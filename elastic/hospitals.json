@@ -1,0 +1,21 @@
+[
+  { "input": { "domain": "ucsfhealth.org", "maxFiles": 1 } },
+  { "input": { "domain": "zuckerbergsanfranciscogeneral.org" } },
+  { "input": { "domain": "healthy.kaiserpermanente.org", "locationFilter": "San Francisco Medical Center", "maxFiles": 1 } },
+  { "input": { "domain": "healthy.kaiserpermanente.org", "locationFilter": "Oakland", "maxFiles": 1 } },
+  { "input": { "domain": "healthy.kaiserpermanente.org", "locationFilter": "Santa Clara", "maxFiles": 1 } },
+  { "input": { "domain": "healthy.kaiserpermanente.org", "locationFilter": "Walnut Creek", "maxFiles": 1 } },
+  { "input": { "domain": "sutterhealth.org", "locationFilter": "CALIFORNIA PACIFIC", "maxFiles": 3 } },
+  { "input": { "domain": "sutterhealth.org", "locationFilter": "ALTA BATES", "maxFiles": 2 } },
+  { "input": { "domain": "sutterhealth.org", "locationFilter": "MILLS PENINSULA MEDICAL", "maxFiles": 1 } },
+  { "input": { "domain": "sutterhealth.org", "locationFilter": "EDEN", "maxFiles": 1 } },
+  { "input": { "domain": "stanfordhealthcare.org", "maxFiles": 2, "timeBudgetSec": 400, "byteBudgetMb": 1000 } },
+  { "input": { "domain": "stanfordchildrens.org", "timeBudgetSec": 300 } },
+  { "input": { "domain": "johnmuirhealth.com", "maxFiles": 2 } },
+  { "input": { "domain": "elcaminohealth.org" } },
+  { "input": { "domain": "mymarinhealth.org" } },
+  { "input": { "domain": "washingtonhealth.com" } },
+  { "input": { "domain": "chinesehospital-sf.org" } },
+  { "input": { "domain": "smchealth.org" } },
+  { "input": { "domain": "goodsamsanjose.com", "timeBudgetSec": 400, "byteBudgetMb": 1000 } }
+]

@@ -1,0 +1,110 @@
+{
+ "505 Parnassus Ave, Box 0296, San Francisco, CA 94143|UCSF Medical Center": {
+  "lat": 37.76307,
+  "lon": -122.4574027
+ },
+ "1001 POTRERO AVE SAN FRANCISCO CALIFORNIA 94110-3518|Priscilla Chan & Mark Zuckerberg San Francisco General Hospital & Trauma Center": {
+  "lat": 37.7568103,
+  "lon": -122.4052532
+ },
+ "\"2425 GEARY BLVD, SAN FRANCISCO, CA 94115\"|Kaiser Foundation Hospital - San Francisco": {
+  "lat": 37.7828619,
+  "lon": -122.4406591
+ },
+ "1601 Ygnacio Valley Road, Walnut Creek, CA 94598|John Muir Health": {
+  "lat": 37.915091,
+  "lon": -122.0415774
+ },
+ "2500 Grant Road, Mountain View, CA 94040|El Camino Hospital": {
+  "lat": 37.3682266,
+  "lon": -122.0798359
+ },
+ "275 W MacArthur Blvd, Oakland, CA 94611|Kaiser Foundation Hospital - Oakland/Richmond": {
+  "lat": 37.8239357,
+  "lon": -122.2579209
+ },
+ "700 LAWRENCE EXPY, SANTA CLARA, CA 95051|Kaiser Foundation Hospital - Santa Clara": {
+  "lat": 37.3359133,
+  "lon": -121.9990348
+ },
+ "2425 GEARY BLVD, SAN FRANCISCO, CA 94115|Kaiser Foundation Hospital - San Francisco": {
+  "lat": 37.7828619,
+  "lon": -122.4406591
+ },
+ "1501 Trousdale Drive, Burlingame, CA 94010|Mills-Peninsula Medical Center": {
+  "lat": 37.5941612,
+  "lon": -122.3830506
+ },
+ "1425 SOUTH MAIN STREET, WALNUT CREEK, CA 94596|Kaiser Foundation Hospital - Walnut Creek": {
+  "lat": 37.8919171,
+  "lon": -122.0602752
+ },
+ "20103 Lake Chabot Road, Castro Valley, CA 94546|Eden Medical Center": {
+  "lat": 37.6980844,
+  "lon": -122.0892714
+ },
+ "601 Duboce Avenue, San Francisco, CA 94117|California Pacific Medical Ctr-Davies Campus Hospital": {
+  "lat": 37.7682569,
+  "lon": -122.4346212
+ },
+ "3555 Cesar Chavez, San Francisco, CA 94110|California Pacific Medical Center - Mission Bernal": {
+  "lat": 37.7475253,
+  "lon": -122.4215637
+ },
+ "1101 Van Ness Avenue, San Francisco, CA 94109|California Pacific Medical Center- Van Ness Campus": {
+  "lat": 37.7859772,
+  "lon": -122.422352
+ },
+ "350 Hawthorne Avenue, Oakland, CA 94609|Alta Bates Summit Medical Center": {
+  "lat": 37.8205823,
+  "lon": -122.2664037
+ },
+ "350 Hawthorne Avenue, Oakland, CA 94609|Alta Bates Summit Medical Center-Summit Campus-Hawthorne": {
+  "lat": 37.8205823,
+  "lon": -122.2664037
+ },
+ "1601 Ygnacio Valley Road, Walnut Creek, CA 94598|John Muir Health Walnut Creek Medical Center": {
+  "lat": 37.915091,
+  "lon": -122.0415774
+ },
+ "725 WELCH RD, PALO ALTO, CA 94304|Lucile Salter Packard Children'S Hospital At Stanford": {
+  "lat": 37.4361567,
+  "lon": -122.175251
+ },
+ "2540 East Street, Concord, CA 94520|John Muir Health Concord Medical Center": {
+  "lat": 37.9835896,
+  "lon": -122.0332593
+ },
+ "250 Bon Air Rd,Greenbrae,CA,94904|MarinHealth Medical Center": {
+  "lat": 37.9475584,
+  "lon": -122.5359044
+ },
+ "845 Jackson St San Francisco CA 94133|Chinese Hospital Association": {
+  "lat": 37.7954771,
+  "lon": -122.4090036
+ },
+ "300 Pasteur Drive, Stanford, CA 94305|Stanford Health Care": {
+  "lat": 37.4326911,
+  "lon": -122.1755409
+ },
+ "2425 SAMARITAN DRIVE, SAN JOSE, CA, 95124|Good Samaritan Hospital": {
+  "lat": 37.2522952,
+  "lon": -121.9457139
+ },
+ "5555 West Las Positas Boulevard, Pleasanton, CA 94588|Stanford Health Care Tri-Valley": {
+  "lat": 37.6935763,
+  "lon": -121.8805094
+ },
+ "725 WELCH RD, PALO ALTO, CA 94304|Lucile Salter Packard Children's Hospital At Stanford": {
+  "lat": 37.4361567,
+  "lon": -122.175251
+ },
+ "2000 Mowry Ave Fremont CA 94538|Washington Township Hospital District": {
+  "lat": 37.5582111,
+  "lon": -121.9802714
+ },
+ "1600 Divisadero, Flr 7, San Francisco, CA 94115|UCSF Langely Porter Psychiatic Hospital": {
+  "lat": 37.7848261,
+  "lon": -122.4391435
+ }
+}

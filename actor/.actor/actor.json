@@ -2,8 +2,27 @@
   "actorSpecification": 1,
   "name": "hospital-price-transparency-parser",
   "title": "Hospital Price Transparency Parser",
-  "description": "Discovers a hospital's CMS price file via cms-hpt.txt, stream-parses it, and outputs normalized prices for target procedure codes.",
+  "description": "Finds a US hospital's CMS price transparency files (cms-hpt.txt), stream-parses multi-GB JSON/CSV, and outputs normalized cash, gross and insurer-negotiated prices for common procedures.",
   "version": "0.1",
   "input": "./input_schema.json",
-  "dockerfile": "../Dockerfile"
+  "dockerfile": "../Dockerfile",
+  "environmentVariables": {
+    "BRIGHTDATA_API_KEY": "@brightdataApiKey",
+    "BRIGHTDATA_SERP_ZONE": "serp_api1",
+    "BRIGHTDATA_UNLOCKER_ZONE": "web_unlocker1"
+  },
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "views": {
+        "overview": {
+          "title": "Prices",
+          "transformation": {
+            "fields": ["hospital_name", "code", "description", "setting", "gross_charge", "discounted_cash", "payer_normalized", "plan_name", "plan_type", "negotiated_dollar", "file_last_updated", "source_url"]
+          },
+          "display": { "component": "table" }
+        }
+      }
+    }
+  }
 }

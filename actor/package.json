@@ -1,0 +1,24 @@
+{
+  "name": "opentab-hospital-price-parser",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Apify Actor: discover a hospital's CMS price transparency file and output normalized prices for target procedure codes.",
+  "scripts": {
+    "start": "node dist/main.js",
+    "start:dev": "tsx src/main.ts",
+    "build": "tsc",
+    "local": "tsx src/local.ts"
+  },
+  "dependencies": {
+    "apify": "^3.7.2",
+    "unzipper": "^0.12.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/unzipper": "^0.10.11",
+    "csv-parse": "^7.0.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

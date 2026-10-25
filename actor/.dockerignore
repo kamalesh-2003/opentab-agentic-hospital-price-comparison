@@ -1,0 +1,5 @@
+node_modules
+dist
+storage
+*.json.tmp
+local-output.json

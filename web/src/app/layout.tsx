@@ -5,7 +5,7 @@ import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 
 export const metadata: Metadata = {
   title: "OpenTab",
-  description: "Know the bill before you get the bill. Compare real published hospital prices.",
+  description: "Know the bill before you get the bill. Compare real published MRI, CT, X-ray and ultrasound prices at hospitals near you, cash vs. insurance.",
   manifest: "/manifest.webmanifest",
 };
 
