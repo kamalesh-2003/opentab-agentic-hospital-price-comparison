@@ -46,8 +46,10 @@ export type PlanType = "commercial" | "medicare_advantage" | "medi_cal" | "excha
 export function planType(payer: string | null, plan: string | null): PlanType | null {
   if (!payer && !plan) return null;
   const t = `${payer ?? ""} ${plan ?? ""}`;
-  if (/medi-?cal|medicaid|alliance|family\s*health\s*plan|san\s*francisco\s*health\s*plan|partnership/i.test(t)) return "medi_cal";
-  if (/medicare|advantage|\bmapd?\b|senior/i.test(t)) return "medicare_advantage";
+  // Files abbreviate heavily: "MCR ADV", "MCARE", "M-CAL", "MCAL", "MA HMO", "DSNP".
+  if (/\bcommercial\b/i.test(t) && !/medicare|\bmcare\b|\bmcr\b|medi-?cal|medicaid/i.test(t)) return "commercial";
+  if (/medi-?cal|\bm-?cal\b|medicaid|alliance|family\s*health\s*plan|san\s*francisco\s*health\s*plan|partnership/i.test(t)) return "medi_cal";
+  if (/medicare|advantage|\bmcare\b|\bmcr\b|\bmedi\s*adv|\badv\b|\bmapd?\b|\bma\s*(hmo|ppo)\b|\bd-?snp\b|senior/i.test(t)) return "medicare_advantage";
   if (/covered\s*california|exchange|marketplace|\bifp\b/i.test(t)) return "exchange";
   if (/workers?'?\s*comp|auto|tricare|va\b|veteran/i.test(t)) return "other";
   return "commercial";

@@ -53,15 +53,17 @@ const tools = [
     id: "opentab.compare_procedure",
     type: "esql",
     description:
-      "Compare hospitals for one CPT code. Returns per hospital: the person's plan negotiated rate (median/min/max across matching rows) if published, the discounted cash price, the gross charge, distance in km, file date, partial flag and source file URL. A null plan_rate means the hospital did not publish a dollar rate for that plan.",
+      "Compare hospitals for one CPT code. Returns per hospital: the person's plan negotiated rate (median/min/max across matching per-scan rows) if published, the discounted cash price (median, with min/max), the gross charge, distance in km, file date, partial flag and source file URL. A null plan_rate means the hospital did not publish a dollar rate for that plan.",
     tags: ["opentab"],
     configuration: {
       query: [
         "FROM opentab-prices",
         "| WHERE code == ?code AND modifiers IS NULL",
-        "| EVAL plan_rate = CASE(payer_normalized == ?payer AND (?plan_type == \"any\" OR plan_type == ?plan_type), negotiated_dollar, null)",
+        // Per-diem and percent-of-charges rows are not a price for one scan, so they never count as the plan rate.
+        "| EVAL per_scan = methodology IS NULL OR NOT (methodology LIKE \"*diem*\" OR methodology LIKE \"*percent*\")",
+        "| EVAL plan_rate = CASE(per_scan AND payer_normalized == ?payer AND (?plan_type == \"any\" OR plan_type == ?plan_type), negotiated_dollar, null)",
         "| EVAL distance_km = ROUND(ST_DISTANCE(location, TO_GEOPOINT(?near)) / 1000, 1)",
-        "| STATS plan_rate_median = MEDIAN(plan_rate), plan_rate_min = MIN(plan_rate), plan_rate_max = MAX(plan_rate), cash_price = MIN(discounted_cash), gross_charge = MAX(gross_charge), file_last_updated = MAX(file_last_updated), distance_km = MIN(distance_km), partial = MAX(partial::integer), source_url = VALUES(source_url) BY hospital_name, hospital_id",
+        "| STATS plan_rate_median = MEDIAN(plan_rate), plan_rate_min = MIN(plan_rate), plan_rate_max = MAX(plan_rate), cash_price = MEDIAN(discounted_cash), cash_min = MIN(discounted_cash), cash_max = MAX(discounted_cash), gross_charge = MEDIAN(gross_charge), file_last_updated = MAX(file_last_updated), distance_km = MIN(distance_km), partial = MAX(partial::integer), source_url = VALUES(source_url) BY hospital_name, hospital_id",
         "| EVAL source_url = MV_FIRST(source_url)",
         "| WHERE distance_km IS NOT NULL AND distance_km <= ?max_km",
         "| SORT plan_rate_median ASC NULLS LAST, cash_price ASC NULLS LAST",
@@ -99,7 +101,7 @@ const tools = [
     tags: ["opentab"],
     configuration: {
       query:
-        "FROM opentab-prices | WHERE code == ?code AND discounted_cash IS NOT NULL AND modifiers IS NULL | STATS cash_price = MIN(discounted_cash), gross_charge = MAX(gross_charge), file_last_updated = MAX(file_last_updated), source_url = VALUES(source_url) BY hospital_name | EVAL source_url = MV_FIRST(source_url) | SORT cash_price ASC | LIMIT 25",
+        "FROM opentab-prices | WHERE code == ?code AND discounted_cash IS NOT NULL AND modifiers IS NULL | STATS cash_price = MEDIAN(discounted_cash), cash_min = MIN(discounted_cash), cash_max = MAX(discounted_cash), gross_charge = MEDIAN(gross_charge), file_last_updated = MAX(file_last_updated), source_url = VALUES(source_url) BY hospital_name | EVAL source_url = MV_FIRST(source_url) | SORT cash_price ASC | LIMIT 25",
       params: { code: { type: "string", description: "CPT code" } },
     },
   },

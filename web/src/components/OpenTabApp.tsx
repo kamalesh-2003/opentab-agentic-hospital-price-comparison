@@ -481,6 +481,11 @@ function HospitalCard({ h, rank, result, selected, onSelect }: { h: HospitalResu
             {result.payer} rates here range {money(h.planRateMin)}–{money(h.planRateMax)} by plan.
           </p>
         )}
+        {h.cashMin != null && h.cashMax != null && h.cashMax - h.cashMin > 1 && (
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            Cash prices listed here range {money(h.cashMin)}–{money(h.cashMax)} (median shown).
+          </p>
+        )}
         {h.cashBeatsPlan && result.payer && <p className="mt-2 text-xs font-semibold text-[var(--good)]">Cash price is lower than the {result.payer} rate here. Ask the billing office.</p>}
         {h.savingsVsMax != null && h.savingsVsMax > 0 && <p className="mt-2 text-sm font-semibold text-[var(--good)]">Save {money(h.savingsVsMax)} vs. the most expensive</p>}
         <Insurers h={h} payer={result.payer} />

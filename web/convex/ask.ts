@@ -19,6 +19,8 @@ export type HospitalResult = {
   planRateMin: number | null;
   planRateMax: number | null;
   cashPrice: number | null;
+  cashMin: number | null;
+  cashMax: number | null;
   grossCharge: number | null;
   /** The number we rank by: plan rate when the person has insurance and it's published, else cash. */
   price: number | null;
@@ -123,6 +125,8 @@ export const ask = action({
         planRateMin: num(r.plan_rate_min),
         planRateMax: num(r.plan_rate_max),
         cashPrice: cash,
+        cashMin: num(r.cash_min),
+        cashMax: num(r.cash_max),
         grossCharge: num(r.gross_charge),
         price,
         priceKind: price == null ? "none" : payer ? "plan" : "cash",
