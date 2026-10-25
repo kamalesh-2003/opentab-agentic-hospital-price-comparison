@@ -14,7 +14,11 @@ if (existsSync(rootEnv)) {
 
 const nextConfig: NextConfig = {
   // Only public values reach the browser bundle; all API keys stay in Convex.
-  env: { NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL ?? "" },
+  env: {
+    NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL ?? "",
+    // Public map key (MapTiler); restricted to our domains in the MapTiler dashboard. Optional.
+    NEXT_PUBLIC_MAPTILER_KEY: process.env.NEXT_PUBLIC_MAPTILER_KEY ?? "",
+  },
 };
 
 export default nextConfig;

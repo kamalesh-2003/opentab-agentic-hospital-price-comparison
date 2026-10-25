@@ -24,7 +24,7 @@ type Props = {
   onSelect: (id: string) => void;
 };
 
-/** Full-screen Leaflet map with price-tag pins. CARTO light tiles (free, no key). */
+/** Full-screen Leaflet map with price-tag pins. */
 export default function MapView({ center, user, pins, fitKey, onSelect }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
@@ -36,11 +36,19 @@ export default function MapView({ center, user, pins, fitKey, onSelect }: Props)
   useEffect(() => {
     if (!el.current || map.current) return;
     const m = L.map(el.current, { zoomControl: false, attributionControl: true }).setView(center, 11);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: "abcd",
-      maxZoom: 19,
-    }).addTo(m);
+    // MapTiler (free tier, key restricted to our domains) when configured; otherwise OpenStreetMap's
+    // standard tiles, which need no key.
+    const mtKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
+    const tiles = mtKey
+      ? L.tileLayer(`https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=${mtKey}`, {
+          attribution: '<a href="https://www.maptiler.com/copyright/">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap contributors</a>',
+          maxZoom: 19,
+        })
+      : L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+        });
+    tiles.addTo(m);
     L.control.zoom({ position: "topright" }).addTo(m);
     layer.current = L.layerGroup().addTo(m);
     userLayer.current = L.layerGroup().addTo(m);
