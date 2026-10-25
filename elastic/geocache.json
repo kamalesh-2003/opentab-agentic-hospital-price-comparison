@@ -1,0 +1,22 @@
+{
+ "505 Parnassus Ave, Box 0296, San Francisco, CA 94143|UCSF Medical Center": {
+  "lat": 37.76307,
+  "lon": -122.4574027
+ },
+ "1001 POTRERO AVE SAN FRANCISCO CALIFORNIA 94110-3518|Priscilla Chan & Mark Zuckerberg San Francisco General Hospital & Trauma Center": {
+  "lat": 37.7568103,
+  "lon": -122.4052532
+ },
+ "\"2425 GEARY BLVD, SAN FRANCISCO, CA 94115\"|Kaiser Foundation Hospital - San Francisco": {
+  "lat": 37.7828619,
+  "lon": -122.4406591
+ },
+ "1601 Ygnacio Valley Road, Walnut Creek, CA 94598|John Muir Health": {
+  "lat": 37.915091,
+  "lon": -122.0415774
+ },
+ "2500 Grant Road, Mountain View, CA 94040|El Camino Hospital": {
+  "lat": 37.3682266,
+  "lon": -122.0798359
+ }
+}

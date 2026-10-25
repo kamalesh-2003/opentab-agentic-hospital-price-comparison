@@ -9,7 +9,8 @@ export function num(v: unknown): number | null {
 
 export function str(v: unknown): string | null {
   if (v === null || v === undefined) return null;
-  const s = String(v).trim();
+  // Some files double-quote values inside CSV fields: "\"2425 GEARY BLVD\"" -> 2425 GEARY BLVD
+  const s = String(v).trim().replace(/^"+|"+$/g, "").trim();
   return s ? s : null;
 }
 

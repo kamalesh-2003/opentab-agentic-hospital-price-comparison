@@ -247,6 +247,7 @@ export async function ingest(
       (f) =>
         f !== rep &&
         !f.error &&
+        f.hospital_name === rep.hospital_name &&
         f.last_updated === rep.last_updated &&
         Math.abs(f.bytes - rep.bytes) <= Math.max(f.bytes, rep.bytes) * 0.001 &&
         f.items_scanned === rep.items_scanned &&
@@ -259,6 +260,23 @@ export async function ingest(
       continue;
     }
     records.push(...fileRecords);
+  }
+
+  // Systems like John Muir name every file "John Muir Health"; give each file its own hospital
+  // using the cms-hpt.txt location name so Walnut Creek and Concord stay separate.
+  const idFiles = new Map<string, Set<string>>();
+  for (const r of records) {
+    if (!idFiles.has(r.hospital_id)) idFiles.set(r.hospital_id, new Set());
+    idFiles.get(r.hospital_id)!.add(r.source_url);
+  }
+  const locByUrl = new Map(unique.map((e) => [e.mrf_url, e.location_name]));
+  for (const r of records) {
+    const loc = locByUrl.get(r.source_url);
+    if ((idFiles.get(r.hospital_id)?.size ?? 0) > 1 && loc) {
+      r.hospital_name = cleanName(loc) ?? r.hospital_name;
+      r.hospital_location = loc;
+      r.hospital_id = slug(`${domain ?? ""}-${loc}`);
+    }
   }
 
   // ---- 3. Summarize honestly

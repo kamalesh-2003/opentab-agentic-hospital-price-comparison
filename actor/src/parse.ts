@@ -400,8 +400,8 @@ async function parseCsv(stream: Readable, h: ParseHandlers, compression: string 
         meta.hospital_name = get("hospital_name");
         meta.last_updated_on = get("last_updated_on");
         meta.version = get("version");
-        meta.location_names = (get("location_name") ?? "").split("|").map((s) => s.trim()).filter(Boolean);
-        meta.addresses = (get("hospital_address") ?? "").split("|").map((s) => s.trim()).filter(Boolean);
+        meta.location_names = (get("location_name") ?? "").split("|").map((s) => str(s)).filter((s): s is string => Boolean(s));
+        meta.addresses = (get("hospital_address") ?? "").split("|").map((s) => str(s)).filter((s): s is string => Boolean(s));
       }
       if (rowNo > 10 && !headerDone) throw new Error("CSV column header not found in the first 10 rows (not a CMS template file?)");
       continue;
