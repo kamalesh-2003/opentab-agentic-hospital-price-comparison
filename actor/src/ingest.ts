@@ -1,6 +1,6 @@
 import { pipeline } from "node:stream";
 import { Budget, BudgetStop } from "./budget.js";
-import { discoverFromDomain, discoverFromName, type HptEntry } from "./discover.js";
+import { discoverFromDomain, discoverFromName, nameTokens, type HptEntry } from "./discover.js";
 import { openUrl, type Via } from "./fetcher.js";
 import { parsePriceFile, type FileMeta } from "./parse.js";
 import { TARGET_CODES, normCode } from "./codes.js";
@@ -190,7 +190,13 @@ export async function ingest(
           rep.version = m.version;
           rep.last_updated = m.last_updated_on;
           rep.hospital_name = m.hospital_name;
-          const name = cleanName(m.hospital_name) ?? e.location_name ?? input.hospitalName ?? domain ?? "Unknown hospital";
+          // Files often use a legal name ("Hayward Sisters Hospital" for St. Rose). If the person typed a
+          // name that matches the cms-hpt.txt location name but not the file's name, show the location name.
+          const fileName = cleanName(m.hospital_name);
+          const typed = input.hospitalName ? nameTokens(input.hospitalName) : [];
+          const hits = (s: string | null) => typed.filter((t) => (s ?? "").toLowerCase().includes(t)).length;
+          const preferLocation = e.location_name && typed.length && hits(e.location_name) > hits(fileName);
+          const name = (preferLocation ? cleanName(e.location_name) : fileName) ?? e.location_name ?? input.hospitalName ?? domain ?? "Unknown hospital";
           ctx = {
             hospital_id: slug(`${domain ?? ""}-${name}`),
             hospital_name: name,
