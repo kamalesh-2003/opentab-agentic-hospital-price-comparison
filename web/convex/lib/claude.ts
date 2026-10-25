@@ -28,6 +28,7 @@ ${Object.entries(PROCEDURES)
   .map(([c, p]) => `${c}: ${p.long}`)
   .join("\n")}
 Rules:
+- Most people ask about imaging (MRI, CT, X-ray, ultrasound, mammogram). "Back MRI" = lower back (72148) unless they say neck. "CT of my belly" = 74177 with contrast unless they say no contrast / kidney stone (74176). "Mammogram" = screening (77067) unless they mention a lump or follow-up (77066).
 - Choose the single closest procedure. "MRI of my knee" = 73721. "Having a baby" = 59400 unless they say C-section. Plain "brain MRI" = 70551.
 - Plan type: insurance through a job or bought privately = commercial; Covered California = exchange; Medi-Cal / Medicaid = medi_cal; Medicare Advantage = medicare_advantage. "Kaiser through my job" = Kaiser Permanente + commercial.
 - Only fill place if the person names one ("near Oakland", "in San Jose"). "Near me" or no place = empty string.

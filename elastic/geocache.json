@@ -102,5 +102,9 @@
  "2000 Mowry Ave Fremont CA 94538|Washington Township Hospital District": {
   "lat": 37.5582111,
   "lon": -121.9802714
+ },
+ "1600 Divisadero, Flr 7, San Francisco, CA 94115|UCSF Langely Porter Psychiatic Hospital": {
+  "lat": 37.7848261,
+  "lon": -122.4391435
  }
 }

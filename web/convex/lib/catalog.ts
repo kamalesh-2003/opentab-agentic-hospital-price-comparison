@@ -26,6 +26,21 @@ export const PROCEDURES = {
   "80061": { label: "Cholesterol test", long: "Lipid panel" },
   "97161": { label: "PT evaluation", long: "Physical therapy evaluation" },
   "95810": { label: "Sleep study", long: "Sleep study (in lab)" },
+  "72148": { label: "Lower back MRI", long: "MRI of the lumbar spine (no contrast)" },
+  "72141": { label: "Neck MRI", long: "MRI of the cervical spine (no contrast)" },
+  "73221": { label: "Shoulder MRI", long: "MRI of the shoulder or arm joint (no contrast)" },
+  "70450": { label: "Head CT", long: "CT scan of the head (no contrast)" },
+  "71250": { label: "Chest CT", long: "CT scan of the chest (no contrast)" },
+  "74176": { label: "CT abdomen & pelvis (no contrast)", long: "CT scan of abdomen and pelvis (no contrast)" },
+  "76856": { label: "Pelvic ultrasound", long: "Pelvic ultrasound (complete)" },
+  "76805": { label: "Pregnancy ultrasound", long: "Obstetric ultrasound (after first trimester)" },
+  "77066": { label: "Diagnostic mammogram", long: "Diagnostic mammogram (both breasts)" },
+  "73030": { label: "Shoulder X-ray", long: "Shoulder X-ray (2+ views)" },
+  "72100": { label: "Lower back X-ray", long: "Lumbar spine X-ray (2-3 views)" },
+  "73562": { label: "Knee X-ray", long: "Knee X-ray (3 views)" },
+  "78815": { label: "PET/CT scan", long: "PET/CT scan (skull base to mid-thigh)" },
+  "93306": { label: "Echocardiogram", long: "Echocardiogram (complete, with Doppler)" },
+  "77080": { label: "Bone density scan", long: "DEXA bone density scan" },
 } as const;
 export type ProcedureCode = keyof typeof PROCEDURES;
 export const PROCEDURE_CODES = Object.keys(PROCEDURES) as [ProcedureCode, ...ProcedureCode[]];

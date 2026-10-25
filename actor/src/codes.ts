@@ -23,6 +23,21 @@ export const TARGET_CODES: Record<string, string> = {
   "80061": "Lipid panel",
   "97161": "Physical therapy evaluation",
   "95810": "Sleep study (in lab)",
+  "72148": "MRI of the lumbar spine (no contrast)",
+  "72141": "MRI of the cervical spine (no contrast)",
+  "73221": "MRI of the shoulder or arm joint (no contrast)",
+  "70450": "CT scan of the head (no contrast)",
+  "71250": "CT scan of the chest (no contrast)",
+  "74176": "CT scan of abdomen and pelvis (no contrast)",
+  "76856": "Pelvic ultrasound (complete)",
+  "76805": "Obstetric ultrasound (after first trimester)",
+  "77066": "Diagnostic mammogram (both breasts)",
+  "73030": "Shoulder X-ray (2+ views)",
+  "72100": "Lumbar spine X-ray (2-3 views)",
+  "73562": "Knee X-ray (3 views)",
+  "78815": "PET/CT scan (skull base to mid-thigh)",
+  "93306": "Echocardiogram (complete, with Doppler)",
+  "77080": "DEXA bone density scan",
 };
 
 export const PROCEDURE_CODE_TYPES = new Set(["CPT", "HCPCS"]);

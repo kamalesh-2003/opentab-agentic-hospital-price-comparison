@@ -15,9 +15,9 @@ const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
 const EXAMPLES = [
   "How much is a knee MRI with Blue Shield?",
-  "Cheapest colonoscopy if I pay cash",
-  "ER visit level 4 with Kaiser through work",
-  "Having a baby with Anthem near Oakland",
+  "Cheapest lower back MRI if I pay cash",
+  "CT scan of my belly, I have Aetna",
+  "Mammogram near Oakland with Anthem",
 ];
 
 /** Radius for discovering and comparing hospitals (~25 miles). */
@@ -304,7 +304,7 @@ export default function OpenTabApp() {
           id="q"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Ask: knee MRI with Blue Shield near me…"
+          placeholder="Ask: knee MRI with Blue Shield, or cash price for a CT…"
           className="h-14 flex-1 rounded-full bg-[var(--panel)] px-5 text-base shadow-xl ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-[var(--brand)]"
           autoComplete="off"
         />
@@ -347,9 +347,9 @@ function Results({
     return (
       <div className="space-y-4">
         <div>
-          <h2 className="text-xl font-bold">What does it cost near you?</h2>
+          <h2 className="text-xl font-bold">What will your scan cost?</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            US hospitals must publish their real prices. Tap the mic or type a procedure and your insurer, and OpenTab compares what hospitals near you published, with a link to the source file for every number.
+            MRI, CT, X-ray and ultrasound prices vary wildly between hospitals, and sometimes paying cash beats your insurance. Hospitals must publish their real prices. Tap the mic and ask, and OpenTab compares what hospitals near you published, with a link to the source file for every number.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
