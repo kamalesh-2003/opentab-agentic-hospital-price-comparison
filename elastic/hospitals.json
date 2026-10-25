@@ -1,5 +1,5 @@
 [
-  { "input": { "domain": "ucsfhealth.org" } },
+  { "input": { "domain": "ucsfhealth.org", "maxFiles": 1 } },
   { "input": { "domain": "zuckerbergsanfranciscogeneral.org" } },
   { "input": { "domain": "healthy.kaiserpermanente.org", "locationFilter": "San Francisco Medical Center", "maxFiles": 1 } },
   { "input": { "domain": "healthy.kaiserpermanente.org", "locationFilter": "Oakland", "maxFiles": 1 } },

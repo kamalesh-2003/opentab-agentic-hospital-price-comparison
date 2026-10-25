@@ -309,7 +309,8 @@ export async function ingest(
 
 function cleanName(s: string | null): string | null {
   if (!s) return null;
-  const t = s.trim();
+  // "Hayward Sisters Hospital dba St. Rose Hospital" -> the name people know.
+  const t = (s.match(/\bd\.?b\.?a\.?\s+(.+)$/i)?.[1] ?? s).trim();
   // Some files shout or use lower case; title-case when the whole name is one case.
   if (t === t.toUpperCase() || t === t.toLowerCase()) {
     // Capitalize after spaces/punctuation but not after apostrophes ("Children's", not "Children'S").
