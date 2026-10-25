@@ -23,6 +23,7 @@ import type * as nearby from "../nearby.js";
 import type * as nearbyScan from "../nearbyScan.js";
 import type * as nearbyScanQueries from "../nearbyScanQueries.js";
 import type * as searches from "../searches.js";
+import type * as voice from "../voice.js";
 
 import type {
   ApiFromModules,
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   nearbyScan: typeof nearbyScan;
   nearbyScanQueries: typeof nearbyScanQueries;
   searches: typeof searches;
+  voice: typeof voice;
 }>;
 
 /**

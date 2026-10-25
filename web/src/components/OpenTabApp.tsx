@@ -9,6 +9,7 @@ import type { AskResult, HospitalResult } from "../../convex/ask";
 import type { MapHospital } from "../../convex/hospitals";
 import { DEFAULT_CENTER } from "../../convex/lib/catalog";
 import type { Pin } from "./MapView";
+import { useVoice } from "./useVoice";
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false });
 
@@ -75,9 +76,9 @@ export default function OpenTabApp() {
   const indexedCount = (area ?? []).filter((r) => r.status === "indexed").length;
 
   const ask = useCallback(
-    async (q: string, silent = false) => {
+    async (q: string, silent = false): Promise<AskResult | null> => {
       const text = q.trim();
-      if (!text || loading) return;
+      if (!text || loading) return null;
       lastAsk.current = Date.now();
       setAsked(text);
       if (!silent) {
@@ -89,14 +90,29 @@ export default function OpenTabApp() {
         const r = await askAction({ question: text, lat: user?.[0], lon: user?.[1] });
         setResult(r);
         setSheetOpen(true);
+        return r;
       } catch (e) {
         if (!silent) setError(cleanError(e));
+        return null;
       } finally {
         setLoading(false);
       }
     },
     [askAction, loading, user],
   );
+
+  // Voice: tap the mic, speak, and OpenTab answers out loud (Cartesia STT + TTS).
+  const voice = useVoice();
+  const onMic = useCallback(async () => {
+    if (voice.state === "listening" || voice.state === "finishing") return voice.stopListening();
+    if (voice.state === "speaking") voice.stopSpeaking();
+    const heard = await voice.listen();
+    if (!heard) return;
+    setQuestion(heard);
+    const r = await ask(heard);
+    if (r) voice.speak(r.summary);
+    else voice.speak("Sorry, I couldn't find prices for that. Try naming a procedure, like a knee MRI.");
+  }, [voice, ask]);
 
   // When a nearby hospital finishes ingesting, refresh the map and the current answer.
   const lastIndexed = useRef<number | null>(null);
@@ -220,9 +236,42 @@ export default function OpenTabApp() {
       >
         <button className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-black/15 md:hidden" aria-label={sheetOpen ? "Collapse results" : "Expand results"} onClick={() => setSheetOpen((o) => !o)} />
         <div className="flex-1 overflow-y-auto px-4 pb-40 pt-3 md:pb-6">
-          <Results asked={asked} loading={loading} error={error} result={result} selected={selected} onSelect={onSelect} onExample={(q) => { setQuestion(q); ask(q); }} />
+          <Results
+            asked={asked}
+            loading={loading}
+            error={error}
+            result={result}
+            selected={selected}
+            onSelect={onSelect}
+            onExample={(q) => {
+              setQuestion(q);
+              ask(q);
+            }}
+            onSpeak={(t) => (voice.state === "speaking" ? voice.stopSpeaking() : voice.speak(t))}
+            speaking={voice.state === "speaking"}
+          />
         </div>
       </section>
+
+      {/* Listening overlay: the voice agent lives on the map */}
+      {(voice.state === "connecting" || voice.state === "listening" || voice.state === "finishing") && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center" aria-live="assertive">
+          <div className="flex flex-col items-center gap-3">
+            <span className="relative flex h-24 w-24 items-center justify-center">
+              <span className="absolute inset-0 animate-ping rounded-full bg-[var(--brand)] opacity-30" />
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand)] text-white shadow-2xl">
+                <MicIcon className="h-8 w-8" />
+              </span>
+            </span>
+            <p className="max-w-[80vw] rounded-2xl bg-[var(--panel)] px-4 py-2 text-center text-base shadow-xl ring-1 ring-black/5">
+              {voice.transcript || (voice.state === "connecting" ? "Starting microphone…" : "Listening… ask about a procedure and your insurance")}
+            </p>
+          </div>
+        </div>
+      )}
+      {voice.error && voice.state !== "listening" && (
+        <p className="absolute inset-x-0 bottom-24 z-30 mx-auto w-fit max-w-[90vw] rounded-xl bg-[var(--warn-soft)] px-3 py-2 text-sm text-[var(--warn)] shadow md:bottom-24">{voice.error}</p>
+      )}
 
       {/* Ask bar */}
       <form
@@ -232,6 +281,17 @@ export default function OpenTabApp() {
           ask(question);
         }}
       >
+        <button
+          type="button"
+          onClick={onMic}
+          aria-label={voice.state === "listening" ? "Stop listening" : "Ask by voice"}
+          aria-pressed={voice.state === "listening"}
+          className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-white shadow-xl transition ${
+            voice.state === "listening" || voice.state === "finishing" ? "scale-110 bg-[#b91c1c]" : "bg-[var(--brand)] hover:scale-105"
+          }`}
+        >
+          {voice.state === "listening" || voice.state === "finishing" ? <span className="h-5 w-5 rounded-sm bg-white" /> : <MicIcon className="h-7 w-7" />}
+        </button>
         <label htmlFor="q" className="sr-only">
           Ask about a procedure
         </label>
@@ -263,6 +323,8 @@ function Results({
   selected,
   onSelect,
   onExample,
+  onSpeak,
+  speaking,
 }: {
   asked: string | null;
   loading: boolean;
@@ -271,6 +333,8 @@ function Results({
   selected: string | null;
   onSelect: (id: string) => void;
   onExample: (q: string) => void;
+  onSpeak: (text: string) => void;
+  speaking: boolean;
 }) {
   const recent = useQuery(api.searches.recent);
   if (!asked && !result) {
@@ -279,7 +343,7 @@ function Results({
         <div>
           <h2 className="text-xl font-bold">What does it cost near you?</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Bay Area hospitals must publish real prices. Ask about a procedure and your insurer, and OpenTab compares what each hospital published, with a link to the source file for every number.
+            US hospitals must publish their real prices. Tap the mic or type a procedure and your insurer, and OpenTab compares what hospitals near you published, with a link to the source file for every number.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -326,6 +390,9 @@ function Results({
               <p className="mt-2 text-sm font-semibold text-[var(--good)]">You could save up to {money(result.spread)} by choosing the cheapest option.</p>
             )}
             {result.procedureNote && <p className="mt-2 text-xs text-[var(--muted)]">{result.procedureNote}</p>}
+            <button onClick={() => onSpeak(result.summary)} className="mt-2 text-xs font-semibold text-[var(--brand-strong)] underline underline-offset-2">
+              {speaking ? "■ Stop" : "🔊 Read aloud"}
+            </button>
           </div>
           <PriceChart result={result} onSelect={onSelect} />
           <ol className="space-y-3">
@@ -518,4 +585,15 @@ function cleanError(e: unknown): string {
   // Convex wraps server errors: "[CONVEX A(ask:ask)] [Request ID: ...] Server Error Uncaught Error: <msg> at ..."
   const inner = m.match(/Uncaught Error:\s*([\s\S]*?)(?:\n\s+at |$)/);
   return (inner?.[1] ?? m).trim().slice(0, 300) || "Something went wrong. Please try again.";
+}
+
+function MicIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect x="9" y="2" width="6" height="12" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0" />
+      <path d="M12 17v4" />
+      <path d="M8 21h8" />
+    </svg>
+  );
 }
