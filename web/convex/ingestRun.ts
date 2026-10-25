@@ -84,7 +84,8 @@ export const run = internalAction({
         if (page.length < 5000) break;
       }
       const viaBrightData = (summary.files ?? []).some((f: { via?: string }) => f.via === "brightdata") || /brightdata/.test(JSON.stringify(summary.log ?? []));
-      const hospitals = await indexRecords(records as never, "apify-live");
+      const near = job.nearbyId ? await ctx.runQuery(internal.ingestRunQueries.nearbyPoint, { nearbyId: job.nearbyId }) : null;
+      const hospitals = await indexRecords(records as never, "apify-live", near ?? undefined);
       const total = hospitals.reduce((a, h) => a + h.indexed, 0);
       await set({
         status: "done",

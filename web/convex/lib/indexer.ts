@@ -27,7 +27,7 @@ async function nominatim(q: string): Promise<{ lat: number; lon: number } | null
 
 export async function geocode(address: string | null, name: string): Promise<{ lat: number; lon: number } | null> {
   const cleaned = (address ?? "")
-    .replace(/\b(box|suite|ste|unit|floor|fl|bldg|building|room|rm)\b\.?\s*[\w-]+,?/gi, "")
+    .replace(/\b(box|suite|ste|unit|floor|flr|fl|bldg|building|room|rm)\b\.?\s*[\w-]+,?/gi, "")
     .replace(/\s+,/g, ",")
     .trim();
   try {
@@ -62,7 +62,7 @@ async function bulk(index: string, docs: Record<string, unknown>[]) {
 }
 
 /** Replace each hospital's prices with these records. Returns per-hospital counts. */
-export async function indexRecords(records: Rec[], via: string) {
+export async function indexRecords(records: Rec[], via: string, fallback?: { lat: number; lon: number }) {
   const byHospital = new Map<string, Rec[]>();
   for (const r of records) {
     if (!byHospital.has(r.hospital_id)) byHospital.set(r.hospital_id, []);
@@ -71,7 +71,8 @@ export async function indexRecords(records: Rec[], via: string) {
   const out: { hospitalId: string; name: string; indexed: number; location: { lat: number; lon: number } | null }[] = [];
   for (const [hospital_id, rows] of byHospital) {
     const first = rows[0];
-    const location = await geocode((first.address as string) ?? null, first.hospital_name);
+    // Hospitals without a map location would slip past radius filters, so fall back to the directory point.
+    const location = (await geocode((first.address as string) ?? null, first.hospital_name)) ?? fallback ?? null;
     const docs = await Promise.all(rows.map(async (r) => ({
       _id: await docId(r),
       ...r,

@@ -63,7 +63,7 @@ const tools = [
         "| EVAL distance_km = ROUND(ST_DISTANCE(location, TO_GEOPOINT(?near)) / 1000, 1)",
         "| STATS plan_rate_median = MEDIAN(plan_rate), plan_rate_min = MIN(plan_rate), plan_rate_max = MAX(plan_rate), cash_price = MIN(discounted_cash), gross_charge = MAX(gross_charge), file_last_updated = MAX(file_last_updated), distance_km = MIN(distance_km), partial = MAX(partial::integer), source_url = VALUES(source_url) BY hospital_name, hospital_id",
         "| EVAL source_url = MV_FIRST(source_url)",
-        "| WHERE distance_km IS NULL OR distance_km <= ?max_km",
+        "| WHERE distance_km IS NOT NULL AND distance_km <= ?max_km",
         "| SORT plan_rate_median ASC NULLS LAST, cash_price ASC NULLS LAST",
         "| LIMIT 25",
       ].join("\n"),

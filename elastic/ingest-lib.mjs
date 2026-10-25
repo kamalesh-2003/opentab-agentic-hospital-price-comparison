@@ -40,7 +40,7 @@ async function nominatim(q) {
 export async function geocode(address, hospitalName) {
   const key = `${address ?? ""}|${hospitalName ?? ""}`;
   if (key in cache) return cache[key];
-  const cleaned = (address ?? "").replace(/\b(box|suite|ste|unit|floor|fl|bldg|building|room|rm)\b\.?\s*[\w-]+,?/gi, "").replace(/\s+,/g, ",").trim();
+  const cleaned = (address ?? "").replace(/\b(box|suite|ste|unit|floor|flr|fl|bldg|building|room|rm)\b\.?\s*[\w-]+,?/gi, "").replace(/\s+,/g, ",").trim();
   let loc = null;
   try {
     if (cleaned) loc = await nominatim(cleaned);
