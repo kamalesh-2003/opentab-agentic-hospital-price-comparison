@@ -21,7 +21,7 @@ type Stage = "searching" | "fetching" | "parsing";
 
 /** The Actor reports progress as "<stage>: <detail>" via setStatusMessage. */
 function stageOf(msg: string | undefined): { stage: Stage; detail: string } | null {
-  const m = msg?.match(/^(searching|fetching|parsing):\s*(.*)$/s);
+  const m = msg?.match(/^(searching|fetching|parsing):\s*([\s\S]*)$/);
   return m ? { stage: m[1] as Stage, detail: m[2] } : null;
 }
 
