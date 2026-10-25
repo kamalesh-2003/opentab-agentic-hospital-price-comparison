@@ -41,11 +41,15 @@ export const run = internalAction({
       via?: string;
     };
     const set = (patch: Patch) => ctx.runMutation(internal.ingest.update, { jobId, ...patch });
+    // For hospitals found near a user, record the outcome so the map pin updates and the next one starts.
+    const finishNearby = async (status: "indexed" | "no_data" | "failed", detail: string) => {
+      if (job.nearbyId) await ctx.runMutation(internal.nearby.finish, { nearbyId: job.nearbyId, status, detail });
+    };
 
     try {
       await set({ status: "searching", detail: job.domain ? `Looking for ${job.domain}/cms-hpt.txt` : `Searching the web for ${job.hospitalName}'s official site (Bright Data SERP)` });
       const input = { hospitalName: job.hospitalName, domain: job.domain, timeBudgetSec: 60, byteBudgetMb: 800, maxFiles: 2 };
-      const { data: started } = await apify(`/v2/acts/${ACTOR()}/runs?timeout=240&memory=2048`, { method: "POST", body: JSON.stringify(input) });
+      const { data: started } = await apify(`/v2/acts/${ACTOR()}/runs?timeout=240&memory=1024`, { method: "POST", body: JSON.stringify(input) });
       await set({ status: "searching", detail: "Apify Actor started", apifyRunId: started.id });
 
       // Poll the run and mirror its status message as live stages.
@@ -68,6 +72,7 @@ export const run = internalAction({
           summary?.message ??
           (runInfo.status === "TIMED-OUT" ? "The hospital's file took too long to download." : `The ingest run ended with status ${runInfo.status}.`);
         await set({ status: "failed", detail: why });
+        await finishNearby(summary?.status === "empty" || summary?.status === "failed" ? "no_data" : "failed", why);
         return;
       }
 
@@ -90,8 +95,11 @@ export const run = internalAction({
         partial: summary.status === "partial",
         via: viaBrightData ? "Bright Data Unlocker" : "direct download",
       });
+      await finishNearby(total > 0 ? "indexed" : "no_data", `${total} prices indexed`);
     } catch (err) {
-      await set({ status: "failed", detail: `Something went wrong: ${(err as Error).message.slice(0, 200)}` });
+      const why = `Something went wrong: ${(err as Error).message.slice(0, 200)}`;
+      await set({ status: "failed", detail: why });
+      await finishNearby("failed", why);
     }
   },
 });

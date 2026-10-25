@@ -131,7 +131,31 @@ export async function findDomains(hospitalName: string, log: string[] = []): Pro
 }
 
 /** Name -> domain (SERP) -> cms-hpt.txt, rejecting files that do not mention the hospital. */
+// Big systems publish one cms-hpt.txt for many hospitals, often on a domain search doesn't surface
+// (Kaiser: healthy.kaiserpermanente.org). Try these before spending a Bright Data SERP call.
+const SYSTEM_DOMAINS: [RegExp, string][] = [
+  [/kaiser/i, "healthy.kaiserpermanente.org"],
+  [/sutter|alta bates|mills.?peninsula|eden medical|cpmc|california pacific/i, "sutterhealth.org"],
+  [/stanford.*(child|packard)|packard|lucile/i, "stanfordchildrens.org"],
+  [/stanford/i, "stanfordhealthcare.org"],
+  [/john muir/i, "johnmuirhealth.com"],
+  [/\bucsf\b/i, "ucsfhealth.org"],
+  [/uc davis|university of california davis/i, "health.ucdavis.edu"],
+  [/el camino/i, "elcaminohealth.org"],
+  [/providence/i, "providence.org"],
+  [/adventist/i, "adventisthealth.org"],
+  [/cedars/i, "cedars-sinai.org"],
+];
+
 export async function discoverFromName(hospitalName: string, log: string[] = []): Promise<Discovery | null> {
+  for (const [re, d] of SYSTEM_DOMAINS) {
+    if (!re.test(hospitalName)) continue;
+    const found = await discoverFromDomain(d, log);
+    if (found && matchesName(hospitalName, found.domain, found.entries)) {
+      log.push(`known health system domain ${d} matched "${hospitalName}"`);
+      return found;
+    }
+  }
   const domains = await findDomains(hospitalName, log);
   for (const d of domains) {
     const found = await discoverFromDomain(d, log);

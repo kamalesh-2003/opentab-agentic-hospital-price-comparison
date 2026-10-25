@@ -3,7 +3,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { PAYERS, PLACE_NAMES, PLAN_TYPES, PROCEDURE_CODES, PROCEDURES } from "./catalog";
+import { PAYERS, PLAN_TYPES, PROCEDURE_CODES, PROCEDURES } from "./catalog";
 
 const MODEL = "claude-opus-5-5";
 // Refusal fallback: on a policy decline the API re-runs the request on a suitable model.
@@ -17,12 +17,12 @@ export const ParsedQuestion = z.object({
   procedure_note: z.string().describe("One short sentence on which version you picked if the question was ambiguous; empty otherwise"),
   payer: z.enum([...PAYERS, "none"]).describe('Insurer named by the person, or "none" if uninsured / not mentioned'),
   plan_type: z.enum(PLAN_TYPES).describe("Product line if stated or implied; any if unknown"),
-  place: z.enum([...PLACE_NAMES, "none"]).describe('Bay Area place the person asked about, or "none" to use their current location'),
+  place: z.string().describe('US city, neighborhood or ZIP the person asked about, exactly as they said it (e.g. "Oakland", "Fresno, CA", "94110"); empty string to use their current location'),
   wants_cash: z.boolean().describe("True if uninsured, self-pay, or asking about cash price"),
 });
 export type ParsedQuestion = z.infer<typeof ParsedQuestion>;
 
-const PARSE_SYSTEM = `You turn a person's question about hospital costs into a structured search for OpenTab, a price-comparison app for San Francisco Bay Area hospitals.
+const PARSE_SYSTEM = `You turn a person's question about hospital costs into a structured search for OpenTab, a US hospital price-comparison app.
 Procedures you can choose from (CPT code: description):
 ${Object.entries(PROCEDURES)
   .map(([c, p]) => `${c}: ${p.long}`)
@@ -30,7 +30,7 @@ ${Object.entries(PROCEDURES)
 Rules:
 - Choose the single closest procedure. "MRI of my knee" = 73721. "Having a baby" = 59400 unless they say C-section. Plain "brain MRI" = 70551.
 - Plan type: insurance through a job or bought privately = commercial; Covered California = exchange; Medi-Cal / Medicaid = medi_cal; Medicare Advantage = medicare_advantage. "Kaiser through my job" = Kaiser Permanente + commercial.
-- Only choose a place if the person names one. Otherwise "none".
+- Only fill place if the person names one ("near Oakland", "in San Jose"). "Near me" or no place = empty string.
 - The question may come from speech-to-text and contain errors; interpret generously.`;
 
 export async function parseQuestion(question: string): Promise<ParsedQuestion> {

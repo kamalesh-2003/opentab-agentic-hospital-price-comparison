@@ -11,7 +11,7 @@ export type Pin = {
   lon: number;
   /** Text on the pin, e.g. "$1,949" or "n/p". */
   label: string | null;
-  tone: "low" | "mid" | "high" | "none" | "idle" | "new";
+  tone: "low" | "mid" | "high" | "none" | "idle" | "new" | "loading" | "queued" | "nodata";
   selected?: boolean;
 };
 

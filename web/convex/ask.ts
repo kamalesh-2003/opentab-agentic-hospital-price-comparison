@@ -6,7 +6,8 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { parseQuestion, summarize } from "./lib/claude";
 import { runTool, esql, type Row } from "./lib/elastic";
-import { DEFAULT_CENTER, PLACES, PLAN_TYPE_LABEL, PROCEDURES, type ProcedureCode } from "./lib/catalog";
+import { DEFAULT_CENTER, PLAN_TYPE_LABEL, PROCEDURES, type ProcedureCode } from "./lib/catalog";
+import { geocodePlace, kmBetween } from "./lib/geo";
 
 export type HospitalResult = {
   hospitalId: string;
@@ -38,6 +39,8 @@ export type AskResult = {
   planLabel: string;
   center: [number, number];
   placeName: string | null;
+  radiusKm: number;
+  widened: boolean;
   hospitals: HospitalResult[];
   /** Hospitals on the map that have not published this procedure (shown as grey pins). */
   notPublished: { hospitalId: string; name: string; lat: number | null; lon: number | null }[];
@@ -66,21 +69,31 @@ export const ask = action({
     }
     const code = parsed.procedure_code as ProcedureCode;
     const payer = parsed.wants_cash || parsed.payer === "none" ? null : parsed.payer;
-    const placeName = parsed.place !== "none" ? parsed.place : null;
-    const center: [number, number] = placeName ? PLACES[placeName] : lat != null && lon != null ? [lat, lon] : DEFAULT_CENTER;
+    // A named place is geocoded by OpenStreetMap, never by Claude.
+    const geo = parsed.place ? await geocodePlace(parsed.place) : null;
+    if (parsed.place && !geo) throw new Error(`I couldn't find "${parsed.place}" on the map. Try a city name or ZIP code.`);
+    const placeName = geo?.label ?? null;
+    const center: [number, number] = geo ? geo.center : lat != null && lon != null ? [lat, lon] : DEFAULT_CENTER;
 
-    // 2. Agent Builder tools (same ones the OpenTab Advisor agent and MCP clients use)
+    // 2. Agent Builder tools (same ones the OpenTab Advisor agent and MCP clients use).
+    //    Search within ~25 miles; widen to ~60 miles if fewer than 2 hospitals have a price.
     t0 = Date.now();
-    const [rows, allHospitals] = await Promise.all([
+    const compare = (maxKm: number) =>
       runTool("opentab.compare_procedure", {
         code,
         payer: payer ?? "",
         plan_type: payer ? parsed.plan_type : "any",
         near: `POINT(${center[1]} ${center[0]})`,
-        max_km: 1000,
-      }),
-      esql("FROM opentab-hospitals | KEEP hospital_id, hospital_name, location | LIMIT 500"),
-    ]);
+        max_km: maxKm,
+      });
+    const [first, allHospitals] = await Promise.all([compare(40), esql("FROM opentab-hospitals | KEEP hospital_id, hospital_name, location | LIMIT 2000")]);
+    let rows = first;
+    let radiusKm = 40;
+    const pricedCount = (rs: Row[]) => rs.filter((r) => (payer ? r.plan_rate_median : r.cash_price) != null).length;
+    if (pricedCount(rows) < 2) {
+      rows = await compare(100);
+      radiusKm = 100;
+    }
     t.tools = Date.now() - t0;
 
     const loc = new Map(allHospitals.map((h) => [String(h.hospital_id), parsePoint(h.location)]));
@@ -120,9 +133,10 @@ export const ask = action({
     const withCode = new Set(hospitals.map((h) => h.hospitalId));
     const notPublished = allHospitals
       .filter((h) => !withCode.has(String(h.hospital_id)))
-      .map((h) => {
+      .flatMap((h) => {
         const p = parsePoint(h.location);
-        return { hospitalId: String(h.hospital_id), name: String(h.hospital_name), lat: p?.[0] ?? null, lon: p?.[1] ?? null };
+        if (!p || kmBetween(center, p) > radiusKm) return [];
+        return [{ hospitalId: String(h.hospital_id), name: String(h.hospital_name), lat: p[0], lon: p[1] }];
       });
 
     // 3. Claude: two-sentence spoken summary, number-checked against what we computed.
@@ -131,7 +145,7 @@ export const ask = action({
     const top = priced.slice(0, 3);
     const most = priced[priced.length - 1];
     const fallback = !priced.length
-      ? `None of the hospitals I have published a ${payer ? `${payer} rate` : "cash price"} for a ${label.toLowerCase()}. ${hospitals.length ? "Check the cards for cash prices and source files." : "Try another procedure."}`
+      ? `None of the hospitals within ${Math.round(radiusKm * 0.621)} miles that I have published a ${payer ? `${payer} rate` : "cash price"} for a ${label.toLowerCase()}. ${hospitals.length ? "Check the cards for cash prices and source files." : "Try another procedure."}`
       : `The lowest published ${payer ? `${payer} rate` : "cash price"} for a ${label.toLowerCase()} is ${money(top[0].price!)} at ${top[0].name}.` +
         (spread ? ` Prices run up to ${money(mostExpensive!)}, so you could save ${money(spread)} by choosing carefully.` : "");
     const facts = [
@@ -164,6 +178,8 @@ export const ask = action({
       planLabel,
       center,
       placeName,
+      radiusKm,
+      widened: radiusKm > 40,
       hospitals,
       notPublished,
       cheapest,

@@ -93,6 +93,14 @@ body {
 .ot-none { background: var(--pin-none); font-weight: 600; opacity: 0.85; }
 .ot-idle { background: var(--brand); }
 .ot-new { background: #7c3aed; animation: ot-drop 0.6s ease-out; }
+.ot-loading { background: #7c3aed; animation: ot-pulse 1.2s ease-in-out infinite; font-weight: 600; }
+.ot-dot.ot-queued { background: #c4b5fd; width: 10px; height: 10px; border-width: 2px; }
+.ot-dot.ot-nodata { background: #d1d5db; width: 9px; height: 9px; border-width: 2px; opacity: 0.8; }
+
+@keyframes ot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(124 58 237 / 0.5); }
+  50% { box-shadow: 0 0 0 10px rgb(124 58 237 / 0); }
+}
 
 .ot-dot {
   position: absolute;

@@ -19,11 +19,16 @@ const EXAMPLES = [
   "Having a baby with Anthem near Oakland",
 ];
 
+/** Radius for discovering and comparing hospitals (~25 miles). */
+const SCAN_KM = 40;
+
 const money = (n: number | null | undefined) => (n == null ? "—" : `$${Math.round(n).toLocaleString("en-US")}`);
 
 export default function OpenTabApp() {
   const listHospitals = useAction(api.hospitals.list);
   const askAction = useAction(api.ask.ask);
+  const scanAction = useAction(api.nearbyScan.scan);
+  const lastAsk = useRef(0);
 
   const [hospitals, setHospitals] = useState<MapHospital[]>([]);
   const [user, setUser] = useState<[number, number] | null>(null);
@@ -53,20 +58,39 @@ export default function OpenTabApp() {
 
   const center = result?.center ?? user ?? DEFAULT_CENTER;
 
+  // "Any location": discover hospitals around the current center and pull their price files live.
+  const scanned = useRef(new Set<string>());
+  const [scanError, setScanError] = useState<string | null>(null);
+  useEffect(() => {
+    const tile = `${Math.round(center[0] * 5) / 5},${Math.round(center[1] * 5) / 5}`;
+    if (scanned.current.has(tile)) return;
+    scanned.current.add(tile);
+    scanAction({ lat: center[0], lon: center[1], radiusKm: SCAN_KM })
+      .then(() => setScanError(null))
+      .catch((e) => setScanError(cleanError(e)));
+  }, [center, scanAction]);
+  const area = useQuery(api.nearby.inArea, { lat: center[0], lon: center[1], radiusKm: SCAN_KM });
+  const reading = (area ?? []).filter((r) => r.status === "ingesting");
+  const queuedCount = (area ?? []).filter((r) => r.status === "new").length;
+  const indexedCount = (area ?? []).filter((r) => r.status === "indexed").length;
+
   const ask = useCallback(
-    async (q: string) => {
+    async (q: string, silent = false) => {
       const text = q.trim();
       if (!text || loading) return;
+      lastAsk.current = Date.now();
       setAsked(text);
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+        setSelected(null);
+      }
       setError(null);
-      setSelected(null);
       try {
         const r = await askAction({ question: text, lat: user?.[0], lon: user?.[1] });
         setResult(r);
         setSheetOpen(true);
       } catch (e) {
-        setError(cleanError(e));
+        if (!silent) setError(cleanError(e));
       } finally {
         setLoading(false);
       }
@@ -74,9 +98,38 @@ export default function OpenTabApp() {
     [askAction, loading, user],
   );
 
+  // When a nearby hospital finishes ingesting, refresh the map and the current answer.
+  const lastIndexed = useRef<number | null>(null);
+  useEffect(() => {
+    if (lastIndexed.current != null && indexedCount > lastIndexed.current) {
+      refreshHospitals();
+      if (asked && !loading && Date.now() - lastAsk.current > 12_000) ask(asked, true);
+    }
+    lastIndexed.current = indexedCount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [indexedCount]);
+
+  const discoveredPins: Pin[] = useMemo(
+    () =>
+      (area ?? [])
+        .filter((r) => r.status !== "indexed")
+        .map((r) => ({
+          id: `nearby:${r._id}`,
+          name: r.status === "ingesting" ? `${r.name}: reading its price file` : r.status === "new" ? `${r.name}: queued` : `${r.name}: ${r.detail ?? "no usable price file"}`,
+          lat: r.lat,
+          lon: r.lon,
+          label: r.status === "ingesting" ? "reading…" : null,
+          tone: r.status === "ingesting" ? ("loading" as const) : r.status === "new" ? ("queued" as const) : ("nodata" as const),
+        })),
+    [area],
+  );
+
   const pins: Pin[] = useMemo(() => {
     if (!result) {
-      return hospitals.map((h) => ({ id: h.hospitalId, name: h.name, lat: h.lat, lon: h.lon, label: null, tone: newIds.includes(h.hospitalId) ? "new" : "idle" }));
+      return [
+        ...discoveredPins,
+        ...hospitals.map((h) => ({ id: h.hospitalId, name: h.name, lat: h.lat, lon: h.lon, label: null, tone: newIds.includes(h.hospitalId) ? ("new" as const) : ("idle" as const) })),
+      ];
     }
     const priced = result.hospitals.filter((h) => h.price != null);
     const tone = (h: HospitalResult): Pin["tone"] => {
@@ -95,12 +148,13 @@ export default function OpenTabApp() {
       out.push({ id: h.hospitalId, name: h.name, lat: h.lat, lon: h.lon, label: "n/p", tone: "none", selected: selected === h.hospitalId });
     }
     void priced;
-    return out;
-  }, [hospitals, result, selected, newIds]);
+    return [...discoveredPins, ...out];
+  }, [hospitals, result, selected, newIds, discoveredPins]);
 
   const fitKey = `${result?.procedureCode ?? ""}|${result?.payer ?? ""}|${center.join(",")}|${hospitals.length}`;
 
   const onSelect = useCallback((id: string) => {
+    if (id.startsWith("nearby:")) return;
     setSelected(id);
     setSheetOpen(true);
     requestAnimationFrame(() => document.getElementById(`card-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
@@ -135,6 +189,27 @@ export default function OpenTabApp() {
           )}
         </div>
       </header>
+
+      {/* Live discovery status */}
+      <div className="pointer-events-none absolute left-1/2 top-20 z-20 -translate-x-1/2 md:left-auto md:right-16 md:top-4 md:translate-x-0">
+        {(reading.length > 0 || scanError || area) && (
+          <p className="pointer-events-auto rounded-full bg-[var(--panel)] px-4 py-2 text-xs font-medium shadow-lg ring-1 ring-black/5" role="status">
+            {scanError ? (
+              <span className="text-[var(--warn)]">Could not look up nearby hospitals: {scanError}</span>
+            ) : reading.length > 0 ? (
+              <>
+                <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-[#7c3aed]" />
+                Reading price files for {reading.length} nearby hospital{reading.length > 1 ? "s" : ""}
+                {queuedCount ? ` (+${queuedCount} queued)` : ""}…
+              </>
+            ) : (
+              <>
+                {indexedCount} hospitals with prices within {Math.round(SCAN_KM * 0.621)} mi
+              </>
+            )}
+          </p>
+        )}
+      </div>
 
       {/* Results sheet: bottom on phones, left column on desktop */}
       <section
@@ -241,8 +316,11 @@ function Results({
           <div className="rounded-2xl bg-[var(--brand-soft)] p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--brand-strong)]">
               {result.procedureLabel} · {result.planLabel}
-              {result.placeName ? ` · near ${result.placeName}` : ""}
+              {result.placeName ? ` · near ${result.placeName}` : ""} · within {Math.round(result.radiusKm * 0.621)} mi
             </p>
+            {result.widened && (
+              <p className="mt-1 text-xs text-[var(--muted)]">Few nearby hospitals published this, so the search was widened to {Math.round(result.radiusKm * 0.621)} miles.</p>
+            )}
             <p className="mt-1 text-base leading-snug">{result.summary}</p>
             {result.spread != null && (
               <p className="mt-2 text-sm font-semibold text-[var(--good)]">You could save up to {money(result.spread)} by choosing the cheapest option.</p>
