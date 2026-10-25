@@ -3,10 +3,61 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "domain": { "title": "Hospital domain", "type": "string", "description": "e.g. ucsfhealth.org. Used to fetch https://<domain>/cms-hpt.txt", "editor": "textfield" },
-    "fileUrl": { "title": "Price file URL", "type": "string", "description": "Direct machine-readable file URL (skips cms-hpt.txt discovery)", "editor": "textfield" },
-    "codes": { "title": "Target codes", "type": "array", "description": "CPT/HCPCS codes to keep", "editor": "stringList" },
-    "timeBudgetSec": { "title": "Time budget (seconds)", "type": "integer", "default": 60 },
-    "byteBudgetMb": { "title": "Byte budget (MB)", "type": "integer", "default": 500 }
+    "hospitalName": {
+      "title": "Hospital name",
+      "type": "string",
+      "description": "e.g. \"Kaiser Permanente San Francisco Medical Center\". Used with Bright Data SERP to find the official site when no domain is given, and to pick matching locations.",
+      "editor": "textfield",
+      "prefill": "UCSF Medical Center"
+    },
+    "domain": {
+      "title": "Hospital domain",
+      "type": "string",
+      "description": "e.g. ucsfhealth.org. The Actor reads https://<domain>/cms-hpt.txt (CMS-required index of price files).",
+      "editor": "textfield",
+      "prefill": "ucsfhealth.org"
+    },
+    "fileUrl": {
+      "title": "Price file URL",
+      "type": "string",
+      "description": "Direct machine-readable file URL (JSON or CSV, optionally zip/gzip). Skips discovery.",
+      "editor": "textfield"
+    },
+    "locationFilter": {
+      "title": "Location filter",
+      "type": "string",
+      "description": "Only process cms-hpt.txt locations whose name contains this text, e.g. \"San Francisco\".",
+      "editor": "textfield"
+    },
+    "codes": {
+      "title": "Procedure codes (CPT/HCPCS)",
+      "type": "array",
+      "description": "Codes to keep. Empty = 23 common shoppable procedures (MRI, CT, colonoscopy, delivery, ER visits, labs...).",
+      "editor": "stringList"
+    },
+    "timeBudgetSec": {
+      "title": "Time budget (seconds)",
+      "type": "integer",
+      "description": "Stop reading after this long and mark results as partial.",
+      "default": 60,
+      "minimum": 5,
+      "maximum": 3600
+    },
+    "byteBudgetMb": {
+      "title": "Byte budget (MB)",
+      "type": "integer",
+      "description": "Stop after downloading this many MB and mark results as partial.",
+      "default": 500,
+      "minimum": 1,
+      "maximum": 20000
+    },
+    "maxFiles": {
+      "title": "Max price files",
+      "type": "integer",
+      "description": "Maximum number of distinct price files to process from cms-hpt.txt.",
+      "default": 3,
+      "minimum": 1,
+      "maximum": 50
+    }
   }
 }
