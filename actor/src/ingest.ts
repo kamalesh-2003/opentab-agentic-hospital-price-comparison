@@ -281,7 +281,8 @@ export async function ingest(
 
   // ---- 3. Summarize honestly
   const errs = files.filter((f) => f.error);
-  const partial = files.some((f) => f.partial) || unique.length < byUrl.size;
+  const partial = files.some((f) => f.partial);
+  const skipped = byUrl.size - unique.length;
   if (!records.length) {
     if (errs.length === files.length && files.length) {
       return finish("failed", `Found the price file but could not read it: ${errs[0].error}`);
@@ -294,7 +295,8 @@ export async function ingest(
     );
   }
   const found = [...new Set(records.map((r) => r.code))].length;
-  const msg = `${records.length.toLocaleString()} prices for ${found} procedures` + (partial ? ` (partial: ${budget.stoppedReason ?? "not all files processed"})` : "");
+  const msg = `${records.length.toLocaleString()} prices for ${found} procedures` + (partial ? ` (partial: ${budget.stoppedReason})` : "") +
+    (skipped > 0 ? `; ${skipped} other location file(s) not processed (maxFiles)` : "");
   await stage("done", msg);
   return finish(partial ? "partial" : "ok", msg);
 }

@@ -91,5 +91,17 @@
  "2425 SAMARITAN DRIVE, SAN JOSE, CA, 95124|Good Samaritan Hospital": {
   "lat": 37.2522952,
   "lon": -121.9457139
+ },
+ "5555 West Las Positas Boulevard, Pleasanton, CA 94588|Stanford Health Care Tri-Valley": {
+  "lat": 37.6935763,
+  "lon": -121.8805094
+ },
+ "725 WELCH RD, PALO ALTO, CA 94304|Lucile Salter Packard Children's Hospital At Stanford": {
+  "lat": 37.4361567,
+  "lon": -122.175251
+ },
+ "2000 Mowry Ave Fremont CA 94538|Washington Township Hospital District": {
+  "lat": 37.5582111,
+  "lon": -121.9802714
  }
 }
